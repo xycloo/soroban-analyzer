@@ -78,7 +78,10 @@ pub fn load_state_loops(
     );
 
     color!(stdout, White);
-    write!(stdout, "\n\n[+] Loops that access state: \n")?;
+
+    if !loops.is_empty() {
+        write!(stdout, "\n\n [WARNING] Loops that access state: \n")?;
+    }
 
     color!(stdout, Red, true);
 

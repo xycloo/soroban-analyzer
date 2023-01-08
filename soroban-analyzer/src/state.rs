@@ -83,15 +83,15 @@ pub fn load_state_fns(
 
     if write {
         color!(stdout, White);
-        write!(
+        writeln!(
             stdout,
-            "\n\n [+] Functions found directly or indirectly accessing contract state: \n"
+            "\n\n [DEBUG] Functions found directly or indirectly accessing contract state: \n"
         )?;
 
         color!(stdout, Yellow, true);
 
         for func in &access_fns {
-            writeln!(stdout, "\n > {} at line {}", func.name, func.ls)?;
+            writeln!(stdout, "> {} at line {}", func.name, func.ls)?;
         }
     }
 

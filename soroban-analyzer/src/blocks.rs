@@ -84,10 +84,13 @@ pub fn multi_state(
 
     if write {
         color!(stdout, White);
-        write!(
-            stdout,
-            "\n [+] Blocks that use state functions multiple times: \n"
-        )?;
+
+        if !multi_state_blocks.is_empty() {
+            write!(
+                stdout,
+                "\n [WARNING] Blocks that use state functions multiple times: \n"
+            )?;
+        }
 
         color!(stdout, Red, true);
         for binding in multi_state_blocks {
