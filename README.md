@@ -6,51 +6,42 @@
 `soroban-analyzer` detects gas inefficiencies in Soroban Rust code. Since soroban hasn't reached a stable version yet there aren't much guidelines on budget and metering, this tool currently works on detecting common mistakes that are gas inefficient also in Solidity.
 
 Currently detects:
-- loops that change or access contract storage.
-- functions that access directly or indirectly contract storage that are used multiple times within a block.
+- loops that indirectly change or access contract storage.
+- functions that access indirectly contract storage that are used multiple times within a block.
+
+By indirectly, we mean that `soroban-analyzer` will only throw alerts when the storage is accessed through a function that accesses it directly thorugh `environment.storage()` (directly or indireclty). This is since the tool assumes that when there is a direct statement the developer already konws what they are doing. When `soroban-analyzer` only checks for indirect storage access it is because the developer may not be aware that they are unnededly modifying/getting storage.
 
 Mainly, the tool targets inefficiencies that are related to storage, which is generally more expensive than updating memory. The tool is contract-centered, meaning that it only suggests changes to improve gas efficiencies, not general programming concepts.
 
-## Usage
-Currently only single-file contracts are supported, but we plan on adding support for structured projects soon. To install `soroban-analyzer`, clone the repo, then `cd` into the repo's directory and run:
+# Installation
+Clone the repo, then `cd` into the repo's directory and build the executable:
 
 ```bash
-cargo build -p soroban-analyzer --release
+git clone https://github.com/xycloo/soroban-analyzer ; cd soroban-analyzer ; cargo build -p soroban-analyzer --release
 ```
 
-You can then try out the tool on the example contract in `test_input/foo.rs`:
+You can also create an alias to try out the tool before moving it to your PATH:
 
 ```bash
-$> ./target/release/soroban-analyzer --p ./test_input/foo.rs
+$ alias soroban-analyzer="/path/to/soroban-analyzer/target/release/soroban-analyzer"
+```
 
-[+] Soroban Analyzer started. Disclaimer: still under development, the tool's scope is currently very limited, expect bugs and breaking changes may occur. 
-Report bugs or suggestions in the github issues page: https://github.com/xycloo/soroban-analyzer/issues.
+# Usage
 
+### Single file
 
- [DEBUG] Functions found directly or indirectly accessing contract state: 
+You can try out the tool on an example contract (`test_input/foo.rs`):
 
-> test_s at line 6
-> get_test at line 10
-> test_s_loop at line 14
-> hello at line 26
-> test at line 39
+```bash
+$ soroban-analyzer --p ./test_input/foo.rs
+```
 
+### Project
 
- [WARNING] Loops that access state: 
+You can also check for gas inefficiencies project-wide by running the following command inside the project's directory:
 
-[-] Line 15: loop accesses contract state, it could lead to breaking the budget as state functions are more expensive. Make sure you trust the range and that accessing or modifying the state within the loop is necessary. 
-
-
-[-] Line 31: loop accesses contract state, it could lead to breaking the budget as state functions are more expensive. Make sure you trust the range and that accessing or modifying the state within the loop is necessary. 
-
-
- [WARNING] Blocks that use state functions multiple times: 
-
-[-] The function `test_s` defined at line 6 accessed contract state and is used multiple times inside the block between lines 26 and 37. It may be better to use `test_s` once and save it in memory. 
-
-
-[-] The function `get_test` defined at line 10 accessed contract state and is used multiple times inside the block between lines 39 and 43. It may be better to use `get_test` once and save it in memory. 
-
+```
+$ soroban-analyzer --all
 ```
 
 ## Contributing

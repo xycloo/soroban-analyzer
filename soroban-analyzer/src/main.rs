@@ -6,6 +6,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, StandardStreamLock, WriteColor};
 use types::{Action, Storage};
+use walkdir::WalkDir;
 
 #[macro_use]
 pub mod macros;
@@ -17,19 +18,13 @@ pub mod state;
 pub mod tree;
 pub mod types;
 
-fn load_instructions() -> [Action; 5] {
-    [
-        Action::LoadStateFns,
-        Action::LoadLoops,
-        Action::LoadBlocks,
-        Action::StateInLoop,
-        Action::MultiState,
-    ]
+fn load_instructions() -> [Action; 2] {
+    [Action::StateInLoop, Action::MultiState]
 }
 
 fn lookup_execute(
     storage: &mut Storage,
-    action: Action,
+    action: &Action,
     path: &PathBuf,
     stdout: &mut StandardStreamLock,
 ) -> std::io::Result<()> {
@@ -43,7 +38,40 @@ fn lookup_execute(
     }
 }
 
-fn launch_analyzer(path: PathBuf) -> std::io::Result<()> {
+fn load_storage(
+    path: Option<PathBuf>,
+    storage: &mut Storage,
+    stdout: &mut StandardStreamLock,
+) -> std::io::Result<()> {
+    if let Some(path) = path {
+        let instructions = [Action::LoadStateFns, Action::LoadLoops, Action::LoadBlocks];
+
+        for action in &instructions {
+            lookup_execute(storage, action, &path, stdout)?
+        }
+    } else {
+        for entry in WalkDir::new(".")
+            .follow_links(true)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            let f_name = entry.file_name().to_string_lossy();
+
+            if f_name.ends_with(".rs") {
+                let path = PathBuf::from(f_name.to_string());
+                let instructions = [Action::LoadStateFns, Action::LoadLoops, Action::LoadBlocks];
+
+                for action in &instructions {
+                    lookup_execute(storage, action, &path, stdout)?
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn launch_analyzer(path: Option<PathBuf>) -> std::io::Result<()> {
     let stdout = StandardStream::stdout(ColorChoice::Always);
     let mut stdout = stdout.lock();
 
@@ -54,8 +82,31 @@ fn launch_analyzer(path: PathBuf) -> std::io::Result<()> {
 
     let mut storage = Storage::new();
 
-    for action in instructions {
-        lookup_execute(&mut storage, action, &path, &mut stdout)?
+    load_storage(path.clone(), &mut storage, &mut stdout)?;
+
+    color!(stdout, Blue);
+    writeln!(stdout, "\n\n\n[+] Starting checks ")?;
+
+    if let Some(path) = path {
+        for action in &instructions {
+            lookup_execute(&mut storage, action, &path, &mut stdout)?
+        }
+    } else {
+        for entry in WalkDir::new(".")
+            .follow_links(true)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            let f_name = entry.file_name().to_string_lossy();
+
+            if f_name.ends_with(".rs") {
+                let path = PathBuf::from(f_name.to_string());
+
+                for action in &instructions {
+                    lookup_execute(&mut storage, action, &path, &mut stdout)?
+                }
+            }
+        }
     }
 
     Ok(())
@@ -64,12 +115,18 @@ fn launch_analyzer(path: PathBuf) -> std::io::Result<()> {
 #[derive(Parser)]
 struct Cli {
     /// The path to the file to read
-    #[clap(long = "p")]
-    path: std::path::PathBuf,
+    #[clap(long = "p", conflicts_with = "all")]
+    path: Option<std::path::PathBuf>,
+    #[clap(long, short)]
+    all: bool,
 }
 
 fn main() {
     let args = Cli::parse();
-    let path = args.path;
-    launch_analyzer(path).unwrap();
+
+    if args.all {
+        launch_analyzer(None).unwrap();
+    } else {
+        launch_analyzer(args.path).unwrap();
+    }
 }

@@ -5,7 +5,7 @@ use rust_code_analysis::node_getter::get_node;
 use rust_code_analysis::{read_file_with_eol, ParserTrait};
 use rust_code_analysis::{FuncSpace, RustParser};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::Path;
 use termcolor::{Color, ColorSpec, StandardStreamLock, WriteColor};
 
 pub fn is_direct_state_access(parser: &RustParser, function: &Fn) -> bool {
@@ -70,13 +70,13 @@ pub fn state_access_fns(parser: &RustParser, fns: &[Fn], found: &mut Vec<Fn>) {
 
 pub fn load_state_fns(
     storage: &mut Storage,
-    path: &PathBuf,
+    path: &Path,
     stdout: &mut StandardStreamLock,
     write: bool,
 ) -> std::io::Result<()> {
     let space = metric_file_parse(path);
 
-    let access_fns = gather_state_access(
+    let mut access_fns = gather_state_access(
         &RustParser::new(read_file_with_eol(path).unwrap().unwrap(), path, None),
         space,
     );
@@ -85,7 +85,8 @@ pub fn load_state_fns(
         color!(stdout, White);
         writeln!(
             stdout,
-            "\n\n [DEBUG] Functions found directly or indirectly accessing contract state: \n"
+            "\n\n [DEBUG] [{}] Functions found directly or indirectly accessing contract state: \n",
+            path.to_str().unwrap()
         )?;
 
         color!(stdout, Yellow, true);
@@ -95,7 +96,7 @@ pub fn load_state_fns(
         }
     }
 
-    storage.load_state_fns(access_fns);
+    storage.load_state_fns(&mut access_fns);
 
     Ok(())
 }

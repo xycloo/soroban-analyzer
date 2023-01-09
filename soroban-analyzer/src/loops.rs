@@ -11,10 +11,10 @@ use crate::{
     types::{Fn, Loop},
 };
 
-fn get_loops(parser: &RustParser) -> Vec<Loop> {
+fn get_loops(parser: &RustParser, path: &Path) -> Vec<Loop> {
     let mut loops = Vec::new();
 
-    in_tree_loops(&mut loops, &get_node(parser));
+    in_tree_loops(&mut loops, &get_node(parser), &path.to_path_buf());
 
     loops
 }
@@ -25,11 +25,10 @@ pub fn load_loops(
     stdout: &mut StandardStreamLock,
     write: bool,
 ) -> std::io::Result<()> {
-    let loops = get_loops(&RustParser::new(
-        read_file_with_eol(path).unwrap().unwrap(),
+    let mut loops = get_loops(
+        &RustParser::new(read_file_with_eol(path).unwrap().unwrap(), path, None),
         path,
-        None,
-    ));
+    );
 
     if write {
         color!(stdout, White);
@@ -41,7 +40,7 @@ pub fn load_loops(
         }
     }
 
-    storage.load_loops(loops);
+    storage.load_loops(&mut loops);
 
     Ok(())
 }
@@ -79,14 +78,23 @@ pub fn load_state_loops(
 
     color!(stdout, White);
 
-    if !loops.is_empty() {
-        write!(stdout, "\n\n [WARNING] Loops that access state: \n")?;
-    }
-
-    color!(stdout, Red, true);
+    /*    if !loops.is_empty() {
+        write!(
+            stdout,
+            "\n\n [WARNING] [{}] Loops that access state: \n",
+            path.to_str().unwrap()
+        )?;
+    }*/
 
     for l in loops {
-        writeln!(stdout, "\n[-] Line {}: loop accesses contract state, it could lead to breaking the budget as state functions are more expensive. Make sure you trust the range and that accessing or modifying the state within the loop is necessary. \n", l.ls)?;
+        if l.file == path {
+            color!(stdout, Yellow);
+
+            write!(stdout, "\n[{}]", l.file.to_str().unwrap())?;
+
+            color!(stdout, Red, true);
+            writeln!(stdout, " Line {}: loop accesses contract state, it could lead to breaking the budget as state functions are more expensive. Make sure you trust the range and that accessing or modifying the state within the loop is necessary. \n", l.ls)?;
+        }
     }
 
     Ok(())

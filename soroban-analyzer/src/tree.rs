@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use tree_sitter::Node;
 
 use crate::types::{Block, Loop};
@@ -144,11 +146,12 @@ pub fn in_tree_id_match(
     }
 }
 
-pub fn in_tree_loops(loops: &mut Vec<Loop>, node: &Node) {
+pub fn in_tree_loops(loops: &mut Vec<Loop>, node: &Node, path: &PathBuf) {
     if node.kind_id() == 259 || node.kind_id() == 260 {
         loops.push(Loop {
             ls: node.start_position().row + 1,
             le: node.end_position().row + 1,
+            file: path.to_path_buf(),
         });
     }
 
@@ -158,7 +161,7 @@ pub fn in_tree_loops(loops: &mut Vec<Loop>, node: &Node) {
         cursor.goto_first_child();
 
         loop {
-            in_tree_loops(loops, &cursor.node());
+            in_tree_loops(loops, &cursor.node(), path);
             if !cursor.goto_next_sibling() {
                 break;
             }
@@ -167,11 +170,12 @@ pub fn in_tree_loops(loops: &mut Vec<Loop>, node: &Node) {
     }
 }
 
-pub fn in_tree_blocks(blocks: &mut Vec<Block>, node: &Node) {
+pub fn in_tree_blocks(blocks: &mut Vec<Block>, node: &Node, path: &PathBuf) {
     if node.kind_id() == 272 {
         blocks.push(Block {
             ls: node.start_position().row + 1,
             le: node.end_position().row + 1,
+            file: path.to_path_buf(),
         });
     }
 
@@ -181,7 +185,7 @@ pub fn in_tree_blocks(blocks: &mut Vec<Block>, node: &Node) {
         cursor.goto_first_child();
 
         loop {
-            in_tree_blocks(blocks, &cursor.node());
+            in_tree_blocks(blocks, &cursor.node(), path);
             if !cursor.goto_next_sibling() {
                 break;
             }

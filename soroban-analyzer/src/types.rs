@@ -1,4 +1,7 @@
-use std::fmt::Debug;
+use std::{
+    fmt::Debug,
+    path::{Path, PathBuf},
+};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Fn {
@@ -30,12 +33,14 @@ pub enum Action {
 pub struct Loop {
     pub ls: usize,
     pub le: usize,
+    pub file: PathBuf,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Block {
     pub ls: usize,
     pub le: usize,
+    pub file: PathBuf,
 }
 
 impl Debug for Loop {
@@ -70,16 +75,16 @@ impl Storage {
         }
     }
 
-    pub fn load_state_fns(&mut self, fns: Vec<Fn>) {
-        self.state_fns = fns;
+    pub fn load_state_fns(&mut self, fns: &mut Vec<Fn>) {
+        self.state_fns.append(fns);
     }
 
-    pub fn load_loops(&mut self, loops: Vec<Loop>) {
-        self.loops = loops;
+    pub fn load_loops(&mut self, loops: &mut Vec<Loop>) {
+        self.loops.append(loops);
     }
 
-    pub fn load_blocks(&mut self, blocks: Vec<Block>) {
-        self.blocks = blocks;
+    pub fn load_blocks(&mut self, blocks: &mut Vec<Block>) {
+        self.blocks.append(blocks);
     }
 
     pub fn read_state_fns(&self) -> &Vec<Fn> {

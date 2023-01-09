@@ -7,10 +7,10 @@ use std::io::Write;
 use std::path::Path;
 use termcolor::{Color, ColorSpec, StandardStreamLock, WriteColor};
 
-fn get_blocks(parser: &RustParser) -> Vec<Block> {
+fn get_blocks(parser: &RustParser, path: &Path) -> Vec<Block> {
     let mut blocks = Vec::new();
 
-    in_tree_blocks(&mut blocks, &get_node(parser));
+    in_tree_blocks(&mut blocks, &get_node(parser), &path.to_path_buf());
 
     blocks
 }
@@ -21,11 +21,10 @@ pub fn load_blocks(
     stdout: &mut StandardStreamLock,
     write: bool,
 ) -> std::io::Result<()> {
-    let blocks = get_blocks(&RustParser::new(
-        read_file_with_eol(path).unwrap().unwrap(),
+    let mut blocks = get_blocks(
+        &RustParser::new(read_file_with_eol(path).unwrap().unwrap(), path, None),
         path,
-        None,
-    ));
+    );
 
     if write {
         color!(stdout, White);
@@ -37,7 +36,7 @@ pub fn load_blocks(
         }
     }
 
-    storage.load_blocks(blocks);
+    storage.load_blocks(&mut blocks);
 
     Ok(())
 }
@@ -85,20 +84,28 @@ pub fn multi_state(
     if write {
         color!(stdout, White);
 
-        if !multi_state_blocks.is_empty() {
-            write!(
-                stdout,
-                "\n [WARNING] Blocks that use state functions multiple times: \n"
-            )?;
-        }
+        /*        if !multi_state_blocks.is_empty() {
+                    write!(
+                        stdout,
+                        "\n [WARNING] [{}] Blocks that use state functions multiple times: \n",
+                        path.to_str().unwrap()
+                    )?;
+                }
+        */
 
-        color!(stdout, Red, true);
         for binding in multi_state_blocks {
-            writeln!(
-                stdout,
-                "\n[-] The function `{}` defined at line {} accessed contract state and is used multiple times inside the block between lines {} and {}. It may be better to use `{}` once and save it in memory. \n",
-                binding.1.name, binding.1.ls, binding.0.ls, binding.0.le, binding.1.name
-            )?;
+            if binding.0.file == path {
+                color!(stdout, Blue);
+
+                write!(stdout, "\n[{}]", binding.0.file.to_str().unwrap())?;
+
+                color!(stdout, Red, true);
+                writeln!(
+                    stdout,
+                    " Lines {}-{}: the function `{}` defined at line {} accessed contract state and is used multiple times inside the block. It may be better to use `{}` once and save it in memory. \n",
+                    binding.0.ls, binding.0.le, binding.1.name, binding.1.ls, binding.1.name
+		)?;
+            }
         }
     }
 

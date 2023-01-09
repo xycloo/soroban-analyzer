@@ -666,6 +666,7 @@ dependencies = [
  "rust-code-analysis",
  "termcolor",
  "tree-sitter",
+ "walkdir",
 ]
 
 [[package]]
