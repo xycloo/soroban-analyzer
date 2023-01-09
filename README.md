@@ -56,6 +56,9 @@ Report bugs or suggestions in the github issues page: https://github.com/xycloo/
 ## Contributing
 If you encounter an unexpected bug or would like to suggest other checks, open an issue on this repo.
 
+## Credits
+The package relies on a slightly modified version of [rust-code-analysis](https://github.com/mozilla/rust-code-analysis/).
+
 ## What's next
 - Add more checks.
 - Start detecting security vulnerabilities.
