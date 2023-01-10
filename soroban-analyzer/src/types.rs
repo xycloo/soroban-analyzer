@@ -80,6 +80,10 @@ impl Storage {
         self.state_fns.append(fns);
     }
 
+    pub fn set_state_fns(&mut self, fns: Vec<Fn>) {
+        self.state_fns = fns;
+    }
+
     pub fn load_loops(&mut self, loops: &mut Vec<Loop>) {
         self.loops.append(loops);
     }

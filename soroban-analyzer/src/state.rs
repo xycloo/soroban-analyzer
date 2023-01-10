@@ -88,7 +88,7 @@ pub fn load_state_fns(
 ) -> std::io::Result<()> {
     let space = metric_file_parse(path);
 
-    let mut access_fns = gather_state_access(
+    let access_fns = gather_state_access(
         storage,
         &RustParser::new(read_file_with_eol(path).unwrap().unwrap(), path, None),
         space,
@@ -109,7 +109,7 @@ pub fn load_state_fns(
         }
     }*/
 
-    storage.load_state_fns(&mut access_fns);
+    storage.set_state_fns(access_fns);
 
     Ok(())
 }
