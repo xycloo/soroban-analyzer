@@ -1,5 +1,6 @@
 use std::{
     fmt::Debug,
+    ops::Deref,
     path::{Path, PathBuf},
 };
 
@@ -87,8 +88,8 @@ impl Storage {
         self.blocks.append(blocks);
     }
 
-    pub fn read_state_fns(&self) -> &Vec<Fn> {
-        &self.state_fns
+    pub fn read_state_fns(&self) -> Vec<Fn> {
+        self.state_fns.to_vec()
     }
 
     pub fn read_loops(&self) -> &Vec<Loop> {

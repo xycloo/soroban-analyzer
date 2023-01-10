@@ -68,6 +68,18 @@ fn load_storage(
         }
     }
 
+    color!(stdout, White);
+    writeln!(
+        stdout,
+        "\n\n [DEBUG] Functions found directly or indirectly accessing contract state: \n",
+    )?;
+
+    color!(stdout, Yellow, true);
+
+    for func in &storage.read_state_fns() {
+        writeln!(stdout, "> {} at line {}", func.name, func.ls)?;
+    }
+
     Ok(())
 }
 

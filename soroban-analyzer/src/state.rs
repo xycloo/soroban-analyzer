@@ -19,11 +19,16 @@ pub fn is_direct_state_access(parser: &RustParser, function: &Fn) -> bool {
     )
 }
 
-pub fn gather_state_access(parser: &RustParser, space: FuncSpace) -> Vec<Fn> {
+pub fn gather_state_access(
+    storage: &mut Storage,
+    parser: &RustParser,
+    space: FuncSpace,
+) -> Vec<Fn> {
     let root_spaces = space.spaces;
     let mut functions = get_space_fns(&mut vec![], root_spaces);
 
-    let mut access_state = Vec::new();
+    let mut access_state = storage.read_state_fns();
+
     state_access_fns(parser, functions.as_slice(), &mut access_state);
 
     loop {
@@ -36,6 +41,13 @@ pub fn gather_state_access(parser: &RustParser, space: FuncSpace) -> Vec<Fn> {
                     &Some(func.ls),
                     &Some(func.le),
                     "identifier",
+                    &access.name,
+                ) || in_tree_match(
+                    parser.get_code(),
+                    &get_node(parser),
+                    &Some(func.ls),
+                    &Some(func.le),
+                    "field_identifier",
                     &access.name,
                 );
 
@@ -77,11 +89,12 @@ pub fn load_state_fns(
     let space = metric_file_parse(path);
 
     let mut access_fns = gather_state_access(
+        storage,
         &RustParser::new(read_file_with_eol(path).unwrap().unwrap(), path, None),
         space,
     );
 
-    if write {
+    /*    if write {
         color!(stdout, White);
         writeln!(
             stdout,
@@ -94,7 +107,7 @@ pub fn load_state_fns(
         for func in &access_fns {
             writeln!(stdout, "> {} at line {}", func.name, func.ls)?;
         }
-    }
+    }*/
 
     storage.load_state_fns(&mut access_fns);
 
