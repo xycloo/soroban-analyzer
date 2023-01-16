@@ -56,6 +56,13 @@ fn state_in_loops(parser: &RustParser, state_fns: Vec<Fn>, loops: Vec<Loop>) -> 
                 &Some(l.le),
                 "identifier",
                 &f.name,
+            ) || in_tree_match(
+                parser.get_code(),
+                &get_node(parser),
+                &Some(l.ls),
+                &Some(l.le),
+                "field_identifier",
+                &f.name,
             ) {
                 state_loops.push(l.clone());
             }

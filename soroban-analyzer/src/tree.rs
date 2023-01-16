@@ -25,7 +25,11 @@ pub fn in_tree_match(
         let code = &code[node.start_byte()..node.end_byte()];
 
         if let Ok(code) = String::from_utf8(code.to_vec()) {
-            if code == code_match && node.kind() == kind_match {
+            if code == code_match
+                && node.kind() == kind_match
+                && (node.parent().unwrap().kind_id() == 237
+                    || node.parent().unwrap().kind_id() == 269)
+            {
                 return true;
             }
         } else {
@@ -79,7 +83,11 @@ pub fn in_tree_matches(
         let code = &code[node.start_byte()..node.end_byte()];
 
         if let Ok(code) = String::from_utf8(code.to_vec()) {
-            if code == code_match && node.kind() == kind_match {
+            if code == code_match
+                && node.kind() == kind_match
+                && (node.parent().unwrap().kind_id() == 237
+                    || node.parent().unwrap().kind_id() == 269)
+            {
                 *matches_count += 1;
             }
         } else {

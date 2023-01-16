@@ -60,6 +60,15 @@ fn multi_state_in_block(
                 "identifier",
                 &f.name,
             );
+            in_tree_matches(
+                &mut count,
+                parser.get_code(),
+                &get_node(parser),
+                &Some(block.ls),
+                &Some(block.le),
+                "field_identifier",
+                &f.name,
+            );
             if count > 1 {
                 result.push((block.clone(), f))
             }
